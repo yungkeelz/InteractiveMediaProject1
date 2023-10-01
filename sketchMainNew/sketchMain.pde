@@ -2,6 +2,7 @@ import controlP5.*;
 import processing.sound.*;
 
 SoundFile soundfile;
+SoundFile soundfile2;
 
 Table peopleData_00_In, peopleData_02_In, peopleData_05_In, temperatureData;
 int maxPeople;
@@ -27,6 +28,10 @@ void setup() {
   floorplan2 = loadImage("02.png");
   floorplan5 = loadImage("05.png");
 
+  soundfile = new SoundFile(this, "5.aif"); 
+  soundfile2 = new SoundFile(this, "vibraphon.aiff");
+  soundfile2.loop();
+
   peopleData_00_In = loadTable("CB11.PC00.06.West_ CB11.00.Wattle In.csv", "csv");
   peopleData_02_In = loadTable("CB11.PC02.14.Broadway_ CB11.02.Broadway.East In.csv", "csv");
   peopleData_05_In = loadTable("CB11.PC05.23_ CB11.05.CR09 In.csv", "csv");
@@ -49,6 +54,7 @@ void setup() {
       public void controlEvent(CallbackEvent event) {
         currentLevel = "Level 00";
         index = 0;
+        soundfile.play();
       }
     });
 
@@ -58,6 +64,7 @@ void setup() {
       public void controlEvent(CallbackEvent event) {
         currentLevel = "Level 02";
         index = 0;
+        soundfile.play();
       }
     });
 
@@ -67,6 +74,7 @@ void setup() {
       public void controlEvent(CallbackEvent event) {
         currentLevel = "Level 05";
         index = 0;
+        soundfile.play();
       }
     });
 
@@ -82,6 +90,9 @@ void setup() {
 void draw() {
   background(0);
   lights();
+
+float playbackSpeed = map(Time, 0, width, 0.25, 4.0);
+  soundfile2.rate(playbackSpeed);
 
   Table currentData;
   if (currentLevel.equals("Level 00")) {

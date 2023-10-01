@@ -1,170 +1,113 @@
-import controlP5.*;
-//import processing.sound.*;
+import controlP5.*; 
 
-//SoundFile soundfile;
-
-Table peopleData; // Combined table for people in and out
+Table peopleData_00_In; // Table for people in using level 00 building data
 int maxPeople; // Maximum number of people for scaling
 int numDots; // Number of dots to draw
 PVector[] dots; // Array to store dot positions
 
-ControlP5 cp5;
-
-int myColor = color(220,220,220);
-int Time = 30;
-Slider timeSlider; // Slider for controlling Time
+ControlP5 cp5; // Controller
+Slider timeSlider;
 Textlabel[] tickLabels = new Textlabel[25];
+int Time = 30;
+int myColor = color(255, 255, 255);
 
-float imgX; 
-float startX; 
-PImage img;
+int index = 0; // people count index
 
-boolean isMouseDragging = false; 
-color mapColor = color(255); 
-boolean isMouseOverMap = false; 
-
-int c1,c2;
 
 
 
 void setup() {
+  size(800, 600); 
+  frameRate(30); 
   
-  //DATA
-  peopleData = loadTable("Data.csv", "header"); 
-  for (TableRow row : peopleData.rows()) {
-    int peopleCount = row.getInt("1"); 
-    println(peopleCount);
-  }
-  
-  //SOUND
-  
-  
-  
-  
-  
-  
-  //FLOORPLAN IMG
-  img = loadImage("LEVEL00.png"); 
-  
+  //LOAD PEOPLE DATA - LEVEL 00
+  peopleData_00_In = loadTable("https://eif-research.feit.uts.edu.au/api/csv/?rFromDate=2023-08-01T00%3A00&rToDate=2023-08-01T23%3A59%3A59&rFamily=people_sh&rSensor=CB11.PC00.06.West&rSubSensor=CB11.00.Wattle+In", "csv"); 
   
   //CONTROLLERS
-  cp5 = new ControlP5(this);
+  cp5 = new ControlP5(this); 
   
-  timeSlider = cp5.addSlider("Time")
-    .setPosition(104, 470)
+  timeSlider = cp5.addSlider("Time") // time slider
+    .setPosition(100, 550)
     .setWidth(600)
     .setHeight(10)
-    .setRange(0, 240) // Adjust the range to match your desired range for Time
+    .setRange(0, 1440)
     .setValue(0)
-    .setNumberOfTickMarks(25)
-    .setSliderMode(Slider.FLEXIBLE)
-    .setColorBackground(color(255, 255, 255))
-    .setColorForeground(color(100, 116, 170));
-  
-  //BUTTONS - LEVEL SELECTION
-  cp5.addButton("Level 00")
-     .setValue(0)
-     .setPosition(575,20)
-     .setSize(200,19)
-     ;
-
-  cp5.addButton("Level 02")
-     .setValue(100)
-     .setPosition(575,40)
-     .setSize(200,19)
-     ;
-     
-  cp5.addButton("Level 05")
-     .setPosition(575,60)
-     .setSize(200,19)
-     .setValue(0)
-     ;
-  
-  
-  
-  //PAGE SET UP
-  size(810, 540); 
-  frameRate(60); 
-  
-  //SLIDER TICKS
-  for (int i = 0; i <= 24; i++) {
+    .setColorLabel(color(0))
+    .setColorBackground(color(0, 0, 0));
+    
+  for (int i = 0; i <=24; i++) {
     tickLabels[i] = cp5.addTextlabel("label" + i)
                        .setText(str(i))
-                       .setPosition(104 + i * (600/25), 495)
-                       .setColorValue(255); 
-                       
-    } 
+                       .setPosition(93 + i * (600/24), 570)
+                       .setColorValue(0);                
+  }
+    
+  //LEVEL SELECTION  
+  cp5.addButton("Level 00")
+    .setPosition(650, 40);
+    
+  cp5.addButton("Level 02")
+     .setPosition(650, 60);
+     
+  cp5.addButton("Level 05") 
+     .setPosition(650, 80); 
+ 
+     
 }
 
+
 void draw() {
-  float r = map(Time, 0, 100, 50, 25); 
-  float g = map(Time, 0, 155, 50, 25);
-  float b = map(Time, 0, 20, 45, 64);
-
-  fill(r, g, b);
-  background(myColor);
-
+  
+  if (index < peopleData_00_In.getRowCount()) {
+    int y = peopleData_00_In.getInt(index, 1); // index is the row, 1 is the column with the data.
+    println(y);
+    index++;
+  }
+  
+  Time = int(timeSlider.getValue()); // gives time variable
+  
+  // CHANGE COLOR OVER TIME FOR HEAT MAP
+  float colour1 = map(Time, 1, 360, 0, 150);
+  float colour2 = map(Time, 360, 720, 200, 0); 
+  float colour3 = map(Time, 720, 1080, 300, 100);
+  
+  
+  fill(colour1, colour2, colour3);
+  
+  //BACKGROUND
+  background(0); 
   float newRectX = -0.1;
   float newRectY = -0.1;
-  float newRectWidth = 850;
-  float newRectHeight = 425;
+  float newRectWidth = 800;
+  float newRectHeight = 600;
+  
   
   noStroke();
   rect(newRectX, newRectY, newRectWidth, newRectHeight);
   
-  Time = int(timeSlider.getValue()); // Update the Time variable
+  //HEADER
+  fill(0); 
+  textAlign(LEFT); 
+  textSize(14);
+  String csvData = "UTS BUILDING 11\n"; 
+  csvData += "People Entered Through Here Today: " + numDots + "\n\n"; 
+  csvData += "Hour: " + Time/60 + "\n"; 
+  text(csvData, 90, 50);
   
-
-  
-
-
-  // Display CSV data continuously
-  fill(255);
-  textAlign(LEFT);
-  textSize(16);
-  
-  //Text Title
-  String csvData = "UTS BUILDING 11\n";
-  csvData += "People Entered Through Here Today: " + numDots + "\n\n";
-  csvData += "Hour: " + Time/10 + "\n";
-  text(csvData, 20, 30);
-  
-  
-  // Number of dots based on the slider position
-  maxPeople = getMaxPeople();
-  numDots = int(map(Time, 0, 255, 0, maxPeople));
-  drawDots();
+  maxPeople = getMaxPeople(); 
+  numDots = int(map(Time, 0, 255, 0, maxPeople)); 
+  drawDots(); 
   
 }
 
-void mousePressed() {
-  isMouseDragging = true;
-}
-
- 
-
-void mouseReleased() {
-  isMouseDragging = false;
-}
-
- 
-
-void slider(float myColor) {
-  myColor = color(240);
-  println("a slider event. setting background to " + myColor);
-}
-
- 
 
 int getMaxPeople() {
-
   int max = 0;
-  for (int i = 0; i < peopleData.getRowCount(); i++) {
-    int numPeople = peopleData.getInt(i, 1); // second column has the number of people
+  for (int i = 0; i < peopleData_00_In.getRowCount(); i++) {
+    int numPeople = peopleData_00_In.getInt(i, 1); // second column has the number of people
     if (numPeople > max) {
       max = numPeople;
     }
-
   }
   return max;
 }
@@ -174,36 +117,39 @@ void drawDots() {
   dots = new PVector[numDots];
 
   for (int i = 0; i < numDots; i++) {
-    float x = random(150, width - 100); // building x-range
-    float y = random(150, height - 210); // building y-range 
+    float x = random(100, width - 100); // building x-range
+    float y = random(100, height - 100); // building y-range 
     dots[i] = new PVector(x, y);
-    ellipse(x, y, 10, 10); // Draw a dot at the calculated position
-    strokeWeight(2);
-
+    ellipse(x, y, 20, 20); // Draw a dot at the calculated position
   }
 }
 
-// function colorA will receive changes from 
-// controller with name colorA
-public void colorA(int theValue) {
-  println("a button event from colorA: "+theValue);
-  c1 = c2;
-  c2 = color(0,160,100);
+
+// LEVEL 00 Button
+public void level00(int theValue) {
+  
 }
 
-// function colorB will receive changes from 
-// controller with name colorB
-public void colorB(int theValue) {
-  println("a button event from colorB: "+theValue);
-  c1 = c2;
-  c2 = color(150,0,0);
+// LEVEL 02 Button
+public void level02(int theValue) {
+  
 }
 
-// function colorC will receive changes from 
-// controller with name colorC
-public void colorC(int theValue) {
-  println("a button event from colorC: "+theValue);
-  c1 = c2;
-  c2 = color(255,255,0);
+// LEVEL 05 Button
+public void level05(int theValue) {
+  
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
